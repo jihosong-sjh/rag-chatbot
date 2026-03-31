@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Data (PDF, parsed, chunks - keep structure only)
+data/raw/**/*.pdf
+data/raw/**/*.hwp
+data/parsed/*.md
+data/chunks/*.json
+data/chromadb/*
+!data/**/.gitkeep
+
+# Environment
+.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# BM25 index
+*.pkl
