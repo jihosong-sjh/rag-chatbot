@@ -109,11 +109,11 @@ def extract_pdf(pdf_path: str | Path) -> PDFExtractionResult:
 
     logger.info("PDF 추출 시작: %s", pdf_path.name)
 
-    # 1단계: pymupdf4llm으로 Markdown 변환
-    md_text = pymupdf4llm.to_markdown(str(pdf_path))
-
-    # 페이지별 추출 (메타데이터용)
+    # 1단계: pymupdf4llm으로 페이지별 Markdown 변환
     page_chunks = pymupdf4llm.to_markdown(str(pdf_path), page_chunks=True)
+
+    # 전체 Markdown: 페이지별 텍스트를 결합
+    md_text = "\n\n".join(chunk["text"] for chunk in page_chunks)
 
     # 2단계: pdfplumber로 표 보완 추출
     tables_by_page = extract_tables_with_pdfplumber(pdf_path)
@@ -122,8 +122,8 @@ def extract_pdf(pdf_path: str | Path) -> PDFExtractionResult:
     pages: list[PageInfo] = []
     scanned_count = 0
 
-    for chunk in page_chunks:
-        page_num = chunk["metadata"]["page"]
+    for i, chunk in enumerate(page_chunks):
+        page_num = chunk["metadata"].get("page") or chunk["metadata"].get("page_number", i)
         page_text = chunk["text"]
         is_scanned = detect_scanned_page(page_text)
 

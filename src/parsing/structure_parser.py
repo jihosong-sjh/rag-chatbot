@@ -65,6 +65,12 @@ ARTICLE_PATTERN = re.compile(
     re.MULTILINE,
 )
 
+# 조 (대안 패턴): "## 3. (보장종목별 보상내용)" 등 숫자. 형식 (DB손보 등)
+ARTICLE_NUMBERED_PATTERN = re.compile(
+    r"^[#\s]*(?P<number>\d+)\.\s*(?P<title>\([^)]*\))\s*(?P<rest>[^\n]*)",
+    re.MULTILINE,
+)
+
 # 항: ①, ②, ③ 등 (원 숫자) 또는 ⑴, ⑵ 또는 괄호 숫자
 PARAGRAPH_PATTERN = re.compile(
     r"^(?P<number>[①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳])\s*(?P<text>[^\n]*)",
@@ -140,17 +146,24 @@ def parse_articles(markdown_text: str) -> list[StructureNode]:
     """
     nodes: list[StructureNode] = []
 
-    # 조(Article) 위치를 모두 찾기
+    # 조(Article) 위치를 모두 찾기 (기본 패턴)
     article_matches = list(ARTICLE_PATTERN.finditer(markdown_text))
+    use_numbered = False
+
+    if not article_matches:
+        # 대안 패턴 시도: "## 3. (보장종목별 보상내용)" 형식
+        article_matches = list(ARTICLE_NUMBERED_PATTERN.finditer(markdown_text))
+        use_numbered = True
 
     if not article_matches:
         logger.warning("약관에서 조(Article) 패턴을 찾을 수 없습니다.")
         return nodes
 
-    logger.info("조(Article) %d개 감지됨", len(article_matches))
+    logger.info("조(Article) %d개 감지됨 (numbered=%s)", len(article_matches), use_numbered)
 
     for i, match in enumerate(article_matches):
-        number = match.group("number").replace(" ", "")
+        raw_number = match.group("number").replace(" ", "")
+        number = f"제{raw_number}조" if use_numbered else raw_number
         title = match.group("title") or ""
         title = title.strip()
 
